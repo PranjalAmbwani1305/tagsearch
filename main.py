@@ -10,18 +10,18 @@ st.write(f"Scraping content from: {url}")
 
 try:
     response = requests.get(url)
-    response.raise_for_status()  # Check if the request was successful
-    response.encoding = 'utf-8'  # Ensure Gujarati characters are properly decoded
+    response.raise_for_status()  
+    response.encoding = 'utf-8'  
     soup = BeautifulSoup(response.content, 'html.parser')
     
-    tag = st.text_input('Enter the tag to search for (e.g., h1, p):', 'h1')
+    tag = st.text_input('Enter the tag to search for ')
 
     if tag:
         elements = soup.find_all(tag)
         if elements:
             st.write(f"Found {len(elements)} <{tag}> elements:")
             for element in elements:
-                st.write(element.text)  # Display the text of each found element
+                st.write(element.text)  
         else:
             st.write(f"No <{tag}> tags found.")
 except requests.exceptions.RequestException as e:
