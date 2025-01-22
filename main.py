@@ -2,49 +2,52 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-def scrape_article_by_keyword(search_keyword):
-    # Construct the search URL
-    url = f"https://www.gujaratsamachar.com/search?search={search_keyword}"
-    
-    # Send a GET request
+# Function to search articles on GujaratiSamachar Live website
+def search_articles(search_term):
+    url = "https://www.gujaratsamachar.com/"  # Replace with the live website URL
     response = requests.get(url)
     
-    # Check for successful response
-    if response.status_code == 200:
-        # Parse the HTML content
-        soup = BeautifulSoup(response.content, 'html.parser')
+    if response.status_code != 200:
+        st.error("Failed to retrieve the webpage.")
+        return []
+    
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Find all article links (Adjust this based on the actual website's HTML structure)
+    articles = soup.find_all('a', href=True)
+    
+    results = []
+    
+    # Check each article for the search term
+    for article in articles:
+        title = article.get_text().strip()
+        link = article['href']
         
-        # Find articles (adjust class name based on actual HTML structure)
-        articles = soup.find_all('div', class_='article')  # Adjust this based on the actual HTML structure
+        if search_term.lower() in title.lower():
+            results.append({'title': title, 'link': link})
+    
+    return results
+
+# Streamlit App
+def app():
+    st.title("GujaratiSamachar Article Search")
+    st.write("Enter a word or sentence to search for related articles.")
+    
+    search_term = st.text_input("Search Term:")
+    
+    if search_term:
+        with st.spinner('Searching articles...'):
+            found_articles = search_articles(search_term)
         
-        # Check if any articles were found
-        if articles:
-            # Extract the first article
-            first_article = articles[0]
-            title = first_article.find('h2').text.strip()  # Adjust based on actual HTML structure
-            link = first_article.find('a')['href']  # Adjust based on actual HTML structure
-            
-            return title, link
+        if found_articles:
+            st.write(f"Found {len(found_articles)} article(s):")
+            for article in found_articles:
+                st.write(f"**{article['title']}**")
+                st.write(f"[Read more]({article['link']})")
         else:
-            return None, None
+            st.write("No articles found matching your search term.")
     else:
-        return None, None
+        st.write("Please enter a search term to begin.")
 
-# Streamlit application
-st.title("Gujarat Samachar Article Search")
-
-# Input field for the search keyword
-search_keyword = st.text_input("Enter a keyword to search for articles:")
-
-if st.button("Search"):
-    if search_keyword:
-        title, link = scrape_article_by_keyword(search_keyword)
-        
-        if title and link:
-            st.success("Article found!")
-            st.write(f"**Title:** {title}")
-            st.write(f"[Read more]({link})")
-        else:
-            st.error("No articles found for the given keyword.")
-    else:
-        st.warning("Please enter a keyword to search.")
+if __name__ == "__main__":
+    app()
