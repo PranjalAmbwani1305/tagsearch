@@ -18,12 +18,11 @@ if search_word:
 
         found_articles = []
 
-        headline_elements = soup.find_all('h2')
-        paragraph_elements = soup.find_all('p')
+        all_elements = soup.find_all(text=True)  # Get all textual content
 
-        for element in headline_elements + paragraph_elements:
-            if search_word.lower() in element.text.lower():
-                found_articles.append(element.text)
+        for element in all_elements:
+            if search_word.lower() in element.lower():
+                found_articles.append(element.strip())
 
         if found_articles:
             st.write(f"Found {len(found_articles)} articles related to '{search_word}':")
