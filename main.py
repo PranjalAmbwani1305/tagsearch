@@ -14,7 +14,7 @@ try:
     response.encoding = 'utf-8'  
     soup = BeautifulSoup(response.content, 'html.parser')
     
-    tag = st.text_input('Enter the tag to search for ')
+    tag = st.text_input('Enter the tag to search for ','h1')
 
     if tag:
         elements = soup.find_all(tag)
