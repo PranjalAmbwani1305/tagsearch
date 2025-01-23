@@ -14,7 +14,6 @@ def fetch_article_links(base_url, keyword):
                 href = a['href']
                 if not href.startswith("http"):
                     href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
-
                 links.append(href)
 
         return links
@@ -35,14 +34,13 @@ def extract_article(link):
         return f"Error extracting article: {e}"
 
 def main():
-    st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📚")
-    
+    st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
     st.title("Gujarati News Article Scraper")
     st.write("Search for articles on **Gujarat Samachar** using a keyword and extract their content dynamically.")
 
     base_url = "https://www.gujarat-samachar.com/"
 
-    keyword = st.text_input("Enter a Keyword to Search", "ટેકનોલોજી")
+    keyword = st.text_input("Keyword to Search (Any)", "ટેકનોલોજી")
 
     if st.button("Find and Extract Articles"):
         if keyword:
@@ -52,10 +50,10 @@ def main():
                 if links:
                     st.success(f"Found {len(links)} articles with the keyword '{keyword}':")
                     for i, link in enumerate(links, start=1):
-                        st.markdown(f"### Article {i}: [Click here to read]({link})")
+                        st.write(f"**Article {i}:** [Link]({link})")
                         with st.spinner("Extracting article content..."):
                             article_content = extract_article(link)
-                            st.text_area(f"Article {i} Content:", article_content, height=300)
+                            st.write(f"**Article Content:**\n{article_content}\n")
                 else:
                     st.warning(f"No articles found with the keyword '{keyword}'.")
         else:
