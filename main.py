@@ -61,11 +61,15 @@ def main():
     st.title("Gujarati News Article Finder")
 
     base_url = "https://www.gujarat-samachar.com/"
-    keyword = st.text_input("Keyword to Search (English)")
+    keyword = st.text_input("Keyword to Search (English or Gujarati)")
 
     if keyword:
-        translated_keyword = translate_keyword_to_gujarati(keyword)
-        st.write(f"Translated keyword (Gujarati): {translated_keyword}")
+        if not any(ord(char) > 128 for char in keyword):  # Check if keyword is in English
+            translated_keyword = translate_keyword_to_gujarati(keyword)
+            st.write(f"Translated keyword (Gujarati): {translated_keyword}")
+        else:
+            translated_keyword = keyword
+            st.write(f"Using entered Gujarati keyword: {translated_keyword}")
 
     if st.button("Find and Extract Articles"):
         if keyword:
