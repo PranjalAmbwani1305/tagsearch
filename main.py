@@ -13,7 +13,7 @@ def translate_keyword_to_gujarati(keyword):
 
 def fetch_article_links(base_url, keyword):
     try:
-        response = requests.get(base_url, timeout=10)
+        response = requests.get(base_url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -36,7 +36,7 @@ def fetch_article_links(base_url, keyword):
 
 def extract_article(link):
     try:
-        response = requests.get(link, timeout=10)
+        response = requests.get(link)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -60,11 +60,11 @@ def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
     st.title("Gujarati News Article Finder")
 
-    base_url = "https://www.gujarat-samachar.com/"
+    base_url = "https://www.gujaratsamachar.com/"
     keyword = st.text_input("Keyword to Search (English or Gujarati)")
 
     if keyword:
-        if not any(ord(char) > 128 for char in keyword):  # Check if keyword is in English
+        if not any(ord(char) > 128 for char in keyword):
             translated_keyword = translate_keyword_to_gujarati(keyword)
             st.write(f"Translated keyword (Gujarati): {translated_keyword}")
         else:
