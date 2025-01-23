@@ -27,8 +27,14 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        paragraphs = soup.find_all('p')
-        article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())
+        # Attempt to get article content from specific classes or tags
+        content = soup.find('div', class_='article-body')  # Update this based on actual site structure
+        if content:
+            article_text = "\n".join(p.get_text() for p in content.find_all('p'))
+        else:
+            paragraphs = soup.find_all('p')
+            article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())
+
         return article_text if article_text else "No article content found."
     except Exception as e:
         return f"Error extracting article: {e}"
