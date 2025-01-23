@@ -27,27 +27,28 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        date = soup.find('h5', class_='pub-date') 
+        date = soup.find('h5')  # Adjusted to find the date in <h5> tag
         article_date = date.get_text(strip=True) if date else "Date not found"
 
-        content = soup.find('div', class_='article-body')
-        if content:
-            article_text = "\n".join(p.get_text() for p in content.find_all('p'))
-        else:
-            paragraphs = soup.find_all('p')
-            article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())
+        content = []
+        for tag in ['h1', 'h2', 'h3']:  # Extract text from h1, h2, and h3 tags
+            for header in soup.find_all(tag):
+                content.append(header.get_text(strip=True))
+        
+        article_text = "\n".join(content) if content else "No article content found."
 
-        return article_date, article_text if article_text else "No article content found."
+        return article_date, article_text
     except Exception as e:
         return f"Error extracting article: {e}", ""
 
 def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
     st.title("Gujarati News Article Finder")
+    st.write("Search for articles using a keyword in **English** or **Gujarati** and extract their content dynamically.")
 
     base_url = "https://www.gujarat-samachar.com/"
 
-    keyword = st.text_input("Keyword to Search")
+    keyword = st.text_input("Keyword to Search (English or Gujarati)", "Technology")
 
     if st.button("Find and Extract Articles"):
         if keyword:
