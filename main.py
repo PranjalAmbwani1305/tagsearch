@@ -27,7 +27,13 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Attempt to get article content from specific classes or tags
+        # Extract the article's publication date (Assuming the date is stored in a <time> or <span>)
+        date = soup.find('time')  # Example: <time datetime="YYYY-MM-DD">Date</time>
+        if not date:
+            date = soup.find('span', class_='article-date')  # Adjust this selector based on the actual structure
+        article_date = date.get_text(strip=True) if date else "Date not found"
+
+        # Extract article content
         content = soup.find('div', class_='article-body')  # Update this based on actual site structure
         if content:
             article_text = "\n".join(p.get_text() for p in content.find_all('p'))
@@ -35,9 +41,9 @@ def extract_article(link):
             paragraphs = soup.find_all('p')
             article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())
 
-        return article_text if article_text else "No article content found."
+        return article_date, article_text if article_text else "No article content found."
     except Exception as e:
-        return f"Error extracting article: {e}"
+        return f"Error extracting article: {e}", ""
 
 def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
@@ -58,7 +64,8 @@ def main():
                     for i, link in enumerate(links, start=1):
                         st.write(f"**Article {i}:** [Link]({link})")
                         with st.spinner("Extracting article content..."):
-                            article_content = extract_article(link)
+                            article_date, article_content = extract_article(link)
+                            st.write(f"**Published on:** {article_date}")
                             st.write(f"**Article Content:**\n{article_content}\n")
                 else:
                     st.warning(f"No articles found with the keyword '{keyword}'.")
