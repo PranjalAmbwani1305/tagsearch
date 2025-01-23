@@ -54,7 +54,7 @@ def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
     st.title("Gujarati News Article Finder")
 
-    base_url = "https://www.gujaratsamachar.com/"
+    base_url = "https://www.gujaratsamachar.com/" 
 
     keyword = st.text_input("Keyword to Search")
 
@@ -70,8 +70,13 @@ def main():
                         with st.spinner("Extracting article content..."):
                             article_date, article_content = extract_article(link)
                             st.write(f"**Published on:** {article_date}")
-                            translated_content = translate_text(article_content, target_language="en")
-                            st.write(f"**Article Content (Translated to English):**\n{translated_content}\n")
+
+                            if article_content:
+                                st.write(f"**Article Content (Original):**\n{article_content[:500]}...")  
+                                translated_content = translate_text(article_content, target_language="en")
+                                st.write(f"**Article Content (Translated to English):**\n{translated_content[:500]}...")
+                            else:
+                                st.warning(f"Article {i} has no content.")
                 else:
                     st.warning(f"No articles found with the keyword '{keyword}'.")
         else:
