@@ -81,7 +81,7 @@ def main():
                             st.write(f"**Published on:** {article_date}")
 
                             if article_content:
-                                st.write(f"**Article Content (Original):**\n{article_content[:500]}...")
+                                st.write(f"**Article Content:**\n{article_content}")
                             else:
                                 st.warning(f"Article {i} has no content.")
                 else:
