@@ -65,9 +65,11 @@ def main():
                 if detected_language != keyword:
                     st.info(f"Detected keyword in Gujarati. Using it directly: '{keyword}'")
                     translated_keyword = keyword
+                    target_language = "gu"
                 else:
                     st.info(f"Detected keyword in English. Translating it to Gujarati: '{keyword}'")
                     translated_keyword = GoogleTranslator(source='en', target='gu').translate(keyword)
+                    target_language = "gu"
 
                 with st.spinner("Searching for articles..."):
                     links = fetch_article_links(base_url, translated_keyword)
@@ -81,7 +83,12 @@ def main():
                                 st.write(f"**Published on:** {article_date}")
 
                                 if article_content:
-                                    st.write(f"**Article Content (Original):**\n{article_content[:500]}...")  
+                                    if target_language == "gu":
+                                        st.write(f"**Article Content (Original in Gujarati):**\n{article_content[:500]}...")
+                                    else:
+                                        st.write(f"**Article Content (Original in English):**\n{article_content[:500]}...")
+                                        translated_content = translate_text(article_content, target_language="gu")
+                                        st.write(f"**Article Content (Translated to Gujarati):**\n{translated_content[:500]}...")
                                 else:
                                     st.warning(f"Article {i} has no content.")
                     else:
