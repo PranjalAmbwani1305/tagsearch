@@ -2,8 +2,9 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# Function to fetch article links based on any keyword
-def fetch_article_links(base_url, keyword):
+# Function to fetch article links based on a keyword
+def fetch_article_links(keyword):
+    base_url = "https://www.gujarat-samachar.com"  # Hardcoded URL
     try:
         response = requests.get(base_url)
         response.raise_for_status()
@@ -11,10 +12,10 @@ def fetch_article_links(base_url, keyword):
 
         # Find all links where the anchor text contains the keyword
         links = [a['href'] for a in soup.find_all('a', href=True) if keyword.lower() in a.text.lower()]
-        return links
+        return links, base_url
     except Exception as e:
         st.error(f"An error occurred while fetching links: {e}")
-        return []
+        return [], base_url
 
 # Function to extract article content from a link
 def extract_article(link):
@@ -33,16 +34,15 @@ def extract_article(link):
 # Main Streamlit app
 def main():
     st.title("Gujarati News Article Scraper")
-    st.write("Enter a Gujarati news website URL and a keyword to find articles and extract their content dynamically.")
+    st.write("Enter a keyword to find articles and extract their content dynamically.")
 
-    # Input fields for URL and keyword
-    base_url = st.text_input("Gujarati News Website URL", "https://www.gujarat-samachar.com")
+    # Input field for the keyword
     keyword = st.text_input("Keyword to Search (Any)", "ટેકનોલોજી")  # Default: "Technology" in Gujarati
 
     if st.button("Find and Extract Articles"):
-        if base_url and keyword:
+        if keyword:
             with st.spinner("Searching for articles..."):
-                links = fetch_article_links(base_url, keyword)
+                links, base_url = fetch_article_links(keyword)
 
                 if links:
                     st.success(f"Found {len(links)} articles with the keyword '{keyword}':")
@@ -56,7 +56,7 @@ def main():
                 else:
                     st.warning(f"No articles found with the keyword '{keyword}'.")
         else:
-            st.error("Please enter both a website URL and a keyword.")
+            st.error("Please enter a keyword.")
 
 if __name__ == "__main__":
     main()
