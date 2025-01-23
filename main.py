@@ -28,13 +28,17 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
+        # Find the article publication date
         date = soup.find('h5') 
         article_date = date.get_text(strip=True) if date else "Date not found"
 
+        # Look for the content of the article
         content = soup.find('div', class_='article-body')
         if content:
+            # Join all paragraphs found inside the article body
             article_text = "\n".join(p.get_text() for p in content.find_all('p'))
         else:
+            # If no specific class is found, fall back to general paragraphs
             paragraphs = soup.find_all('p')
             article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())
 
@@ -84,11 +88,14 @@ def main():
 
                                 if article_content:
                                     if target_language == "gu":
-                                        st.write(f"**Article Content (Original in Gujarati):**\n{article_content[:500]}...")
+                                        st.write(f"**Article Content (Original in Gujarati):**\n{article_content[:1000]}...")
                                     else:
-                                        st.write(f"**Article Content (Original in English):**\n{article_content[:500]}...")
+                                        st.write(f"**Article Content (Original in English):**\n{article_content[:1000]}...")
                                         translated_content = translate_text(article_content, target_language="gu")
-                                        st.write(f"**Article Content (Translated to Gujarati):**\n{translated_content[:500]}...")
+                                        st.write(f"**Article Content (Translated to Gujarati):**\n{translated_content[:1000]}...")
+                                    # Optionally, show more of the article
+                                    if len(article_content) > 1000:
+                                        st.write(f"**Full Article:**\n{article_content}")
                                 else:
                                     st.warning(f"Article {i} has no content.")
                     else:
