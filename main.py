@@ -41,7 +41,7 @@ def extract_article(link):
 
 def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
-    st.title("Gujarati News Article Scraper")
+    st.title("Gujarati News Article Finder")
     st.write("Search for articles on **Gujarat Samachar** using a keyword and extract their content dynamically.")
 
     base_url = "https://www.gujarat-samachar.com/"
