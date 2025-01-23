@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+from deep_translator import GoogleTranslator
 
 def fetch_article_links(base_url, keyword):
     try:
@@ -41,13 +42,21 @@ def extract_article(link):
     except Exception as e:
         return f"Error extracting article: {e}", ""
 
+def translate_text(text, target_language="en"):
+    try:
+        translated = GoogleTranslator(source='auto', target=target_language).translate(text)
+        return translated
+    except Exception as e:
+        st.error(f"Error translating article: {e}")
+        return text
+
 def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
     st.title("Gujarati News Article Finder")
 
     base_url = "https://www.gujarat-samachar.com/"
 
-    keyword = st.text_input("Keyword to Serach ")
+    keyword = st.text_input("Keyword to Search")
 
     if st.button("Find and Extract Articles"):
         if keyword:
@@ -61,7 +70,8 @@ def main():
                         with st.spinner("Extracting article content..."):
                             article_date, article_content = extract_article(link)
                             st.write(f"**Published on:** {article_date}")
-                            st.write(f"**Article Content:**\n{article_content}\n")
+                            translated_content = translate_text(article_content, target_language="en")
+                            st.write(f"**Article Content (Translated to English):**\n{translated_content}\n")
                 else:
                     st.warning(f"No articles found with the keyword '{keyword}'.")
         else:
