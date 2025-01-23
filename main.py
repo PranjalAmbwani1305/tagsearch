@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# Function to fetch article links based on a keyword
+# Fetch article links and relevant text dynamically
 def fetch_article_links(keyword):
     base_url = "https://www.gujarat-samachar.com"  # Hardcoded URL
     try:
@@ -10,34 +10,44 @@ def fetch_article_links(keyword):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Find all links where the anchor text contains the keyword
-        links = [a['href'] for a in soup.find_all('a', href=True) if keyword.lower() in a.text.lower()]
+        # Debugging: Show raw HTML structure
+        if st.checkbox("Show Page HTML (Debugging)"):
+            st.text(soup.prettify())
+
+        # Search across all tags for the keyword
+        links = []
+        for tag in soup.find_all(True):  # `True` matches all tags
+            text = tag.get_text(strip=True)  # Extract visible text
+            if keyword.lower() in text.lower():  # Match keyword
+                if tag.name == "a" and tag.has_attr('href'):  # If it's a link
+                    href = tag['href']
+                    links.append(href)
         return links, base_url
     except Exception as e:
         st.error(f"An error occurred while fetching links: {e}")
         return [], base_url
 
-# Function to extract article content from a link
+# Extract content from an article link
 def extract_article(link):
     try:
         response = requests.get(link)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Extract article content based on structure (e.g., <p> tags)
-        paragraphs = soup.find_all('p')  # Adjust if needed for the website
-        article_text = "\n".join(p.get_text() for p in paragraphs)
+        # Extract text from all possible content tags
+        content_tags = soup.find_all(['p', 'div', 'span'])  # Add tags as needed
+        article_text = "\n".join(tag.get_text(strip=True) for tag in content_tags)
         return article_text if article_text else "No article content found."
     except Exception as e:
         return f"Error extracting article: {e}"
 
 # Main Streamlit app
 def main():
-    st.title("Gujarati News Article Scraper")
-    st.write("Enter a keyword to find articles and extract their content dynamically.")
+    st.title("Gujarati News Scraper")
+    st.write("Enter a keyword to search articles and extract their content dynamically.")
 
     # Input field for the keyword
-    keyword = st.text_input("Keyword to Search (Any)", "ટેકનોલોજી")  # Default: "Technology" in Gujarati
+    keyword = st.text_input("Keyword to Search (Any)", "સમાચાર")  # Default: "News" in Gujarati
 
     if st.button("Find and Extract Articles"):
         if keyword:
