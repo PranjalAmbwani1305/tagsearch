@@ -9,20 +9,20 @@ def fetch_article_links(base_url, keyword):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Find all links where the anchor text contains the keyword
+        # Find all anchor (`<a>`) tags with `href` attributes and filter by keyword
         links = []
         for a in soup.find_all('a', href=True):
-            if keyword.lower() in a.text.lower():
+            if keyword.lower() in a.text.lower():  # Check if the keyword exists in the link text
                 href = a['href']
-                # Handle relative URLs
+                # Handle relative URLs by appending them to the base URL
                 if not href.startswith("http"):
                     href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
                 links.append(href)
 
         return links
     except Exception as e:
-        st.error(f"An error occurred while fetching links: {e}")
-        return []
+        st.error(f"An error occurred while fetching links: {e}")  # Display an error message in Streamlit
+        return []  # Return an empty list if an error occurs
 
 # Function to extract article content from a link
 def extract_article(link):
@@ -31,24 +31,26 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Extract article content based on structure (e.g., <p> tags)
-        paragraphs = soup.find_all('p')  # Adjust if needed for the specific website
-        article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())
+        # Extract paragraphs (`<p>` tags) from the article
+        paragraphs = soup.find_all('p')
+        article_text = "\n".join(p.get_text() for p in paragraphs if p.get_text())  # Combine non-empty paragraphs
         return article_text if article_text else "No article content found."
     except Exception as e:
-        return f"Error extracting article: {e}"
+        return f"Error extracting article: {e}"  # Return error message in case of failure
 
 # Main Streamlit app
 def main():
     st.title("Gujarati News Article Scraper")
-    st.write("Enter a Gujarati news website URL and a keyword to find articles and extract their content dynamically.")
+    st.write("Search for articles on **Gujarat Samachar** using a keyword and extract their content dynamically.")
 
-    # Input fields for URL and keyword
-    base_url = st.text_input("Gujarati News Website URL", "https://www.gujarat-samachar.com")
-    keyword = st.text_input("Keyword to Search (Any)", "ટેકનોલોજી")  # Default: "Technology" in Gujarati
+    # Fixed URL for Gujarat Samachar
+    base_url = "https://www.gujarat-samachar.com/"
+
+    # Input field for keyword
+    keyword = st.text_input("Keyword to Search (Any)", "ટેકનોલોજી")  # Default keyword is "Technology" in Gujarati
 
     if st.button("Find and Extract Articles"):
-        if base_url and keyword:
+        if keyword:
             with st.spinner("Searching for articles..."):
                 links = fetch_article_links(base_url, keyword)
 
@@ -62,7 +64,7 @@ def main():
                 else:
                     st.warning(f"No articles found with the keyword '{keyword}'.")
         else:
-            st.error("Please enter both a website URL and a keyword.")
+            st.error("Please enter a keyword.")
 
 if __name__ == "__main__":
     main()
