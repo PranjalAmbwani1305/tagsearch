@@ -54,7 +54,7 @@ def main():
     st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
     st.title("Gujarati News Article Finder")
 
-    base_url = "https://www.gujarat-samachar.com/"
+    base_url = "https://www.gujaratsamachar.com/"
 
     keyword = st.text_input("Keyword to Search")
 
