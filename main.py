@@ -2,52 +2,61 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# Function to search articles on GujaratiSamachar Live website
-def search_articles(search_term):
-    url = "https://www.gujaratsamachar.com/"  # Replace with the live website URL
-    response = requests.get(url)
-    
-    if response.status_code != 200:
-        st.error("Failed to retrieve the webpage.")
+# Function to fetch article links based on a search tag
+def fetch_article_links(base_url, search_tag):
+    try:
+        response = requests.get(base_url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Adjust this selector based on Gujarat Samachar's HTML structure
+        links = [a['href'] for a in soup.find_all('a', href=True) if search_tag in a.text]
+        return links
+    except Exception as e:
+        st.error(f"An error occurred while fetching links: {e}")
         return []
-    
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
-    # Find all article links (Adjust this based on the actual website's HTML structure)
-    articles = soup.find_all('a', href=True)
-    
-    results = []
-    
-    # Check each article for the search term
-    for article in articles:
-        title = article.get_text().strip()
-        link = article['href']
-        
-        if search_term.lower() in title.lower():
-            results.append({'title': title, 'link': link})
-    
-    return results
 
-# Streamlit App
-def app():
-    st.title("GujaratiSamachar Article Search")
-    st.write("Enter a word or sentence to search for related articles.")
-    
-    search_term = st.text_input("Search Term:")
-    
-    if search_term:
-        with st.spinner('Searching articles...'):
-            found_articles = search_articles(search_term)
+# Function to extract article content from a link
+def extract_article(link):
+    try:
+        response = requests.get(link)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
         
-        if found_articles:
-            st.write(f"Found {len(found_articles)} article(s):")
-            for article in found_articles:
-                st.write(f"**{article['title']}**")
-                st.write(f"[Read more]({article['link']})")
+        # Adjust this to select the main content based on Gujarat Samachar's structure
+        paragraphs = soup.find_all('p')  # Find all <p> tags that contain article text
+        article_text = "\n".join(p.get_text() for p in paragraphs)  # Combine paragraph text
+        return article_text if article_text else "No article content found."
+    except Exception as e:
+        return f"Error extracting article: {e}"
+
+# Main Streamlit app
+def main():
+    st.title("Gujarat Samachar Article Extractor")
+    st.write("Enter the Gujarat Samachar website URL and a keyword to find articles and extract their content.")
+
+    # Input fields for URL and search tag
+    base_url = st.text_input("Gujarat Samachar Website URL", "https://www.gujarat-samachar.com")
+    search_tag = st.text_input("Gujarati Keyword to Search", "સમાચાર")  # Default: "news" in Gujarati
+
+    if st.button("Find and Extract Articles"):
+        if base_url and search_tag:
+            with st.spinner("Searching for articles..."):
+                links = fetch_article_links(base_url, search_tag)
+
+                if links:
+                    st.success(f"Found {len(links)} articles with the keyword '{search_tag}':")
+                    for link in links:
+                        if not link.startswith("http"):  # Handle relative links
+                            link = f"{base_url.rstrip('/')}/{link.lstrip('/')}"
+                        st.write(f"**Link**: {link}")
+                        with st.spinner("Extracting article content..."):
+                            article_content = extract_article(link)
+                            st.write(f"**Article Content**:\n{article_content}")
+                else:
+                    st.warning("No articles found with the specified keyword.")
         else:
-            st.write("No articles found matching your search term.")
-    else:
-        st.write("Please enter a search term to begin.")
+            st.error("Please enter both a website URL and a keyword.")
 
 if __name__ == "__main__":
-    app()
+    main()
