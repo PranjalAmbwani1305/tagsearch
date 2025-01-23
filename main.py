@@ -28,7 +28,7 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        date = soup.find('h5')
+        date = soup.find(['h5', 'time', 'span', {'class': 'date'}])  # Checking multiple possible tags for date
         article_date = date.get_text(strip=True) if date else "Date not found"
 
         content = soup.find('div', class_='article-body')
