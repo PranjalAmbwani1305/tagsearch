@@ -27,14 +27,12 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Extract the article's publication date (Assuming the date is stored in a <time> or <span>)
-        date = soup.find('time')  # Example: <time datetime="YYYY-MM-DD">Date</time>
+        date = soup.find('time')
         if not date:
-            date = soup.find('span', class_='article-date')  # Adjust this selector based on the actual structure
+            date = soup.find('span', class_='article-date')
         article_date = date.get_text(strip=True) if date else "Date not found"
 
-        # Extract article content
-        content = soup.find('div', class_='article-body')  # Update this based on actual site structure
+        content = soup.find('div', class_='article-body')
         if content:
             article_text = "\n".join(p.get_text() for p in content.find_all('p'))
         else:
@@ -52,7 +50,7 @@ def main():
 
     base_url = "https://www.gujarat-samachar.com/"
 
-    keyword = st.text_input("Keyword to Search (English or Gujarati)", "Technology")  # You can enter English or Gujarati
+    keyword = st.text_input("Keyword to Search (English or Gujarati)", "Technology")
 
     if st.button("Find and Extract Articles"):
         if keyword:
