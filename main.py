@@ -63,10 +63,10 @@ def main():
             with st.spinner("Detecting keyword language..."):
                 detected_language = GoogleTranslator(source='auto', target='en').translate(keyword)
                 if detected_language != keyword:
-                    st.info(f"Detected keyword in Gujarati. Translating it to English: '{detected_language}'")
-                    translated_keyword = detected_language
+                    st.info(f"Detected keyword in Gujarati. Using it directly: '{keyword}'")
+                    translated_keyword = keyword
                 else:
-                    st.info(f"Detected keyword in English. Translating to Gujarati: '{keyword}'")
+                    st.info(f"Detected keyword in English. Translating it to Gujarati: '{keyword}'")
                     translated_keyword = GoogleTranslator(source='en', target='gu').translate(keyword)
 
                 with st.spinner("Searching for articles..."):
