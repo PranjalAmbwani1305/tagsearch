@@ -28,7 +28,7 @@ def extract_article(link):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        date = soup.find('h5') 
+        date = soup.find('h5')
         article_date = date.get_text(strip=True) if date else "Date not found"
 
         content = soup.find('div', class_='article-body')
@@ -84,9 +84,6 @@ def main():
 
                                 if article_content:
                                     st.write(f"**Article Content (Original in Gujarati):**\n{article_content}")
-                                    if target_language == "gu" and article_content != translated_keyword:
-                                        translated_content = translate_text(article_content, target_language="gu")
-                                        st.write(f"**Article Content (Translated to Gujarati):**\n{translated_content}")
                                 else:
                                     st.warning(f"Article {i} has no content.")
                     else:
