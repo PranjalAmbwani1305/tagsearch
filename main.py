@@ -17,7 +17,8 @@ def fetch_article_links_by_keyword_and_date(base_url, keyword, date_str, max_pag
 
             for a in soup.find_all('a', href=True):
                 href = a['href']
-                if (keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower()) and date_str in href:
+                # Ensure the keyword and date appear in the article link (or in its content)
+                if (keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower()) and date_str in a.text:
                     if not href.startswith("http"):
                         href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
                     links.append(href)
