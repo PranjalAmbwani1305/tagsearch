@@ -1,56 +1,24 @@
-import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-from deep_translator import GoogleTranslator
+import streamlit as st
 from datetime import datetime
 
-def fetch_article_links(base_url, keyword):
-    try:
-        response = requests.get(base_url)
-        response.raise_for_status()
+def extract_article(link, newspaper, date_str):
+    article_date = "Date not found"
+    article_text = ""
+
+    response = requests.get(link)
+    if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        links = []
-        for a in soup.find_all('a', href=True):
-            if keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower():
-                href = a['href']
-                if not href.startswith("http"):
-                    href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
+        date_tag = soup.find('time')
+        if date_tag:
+            article_date = date_tag.get_text(strip=True)
 
-                links.append(href)
-        return links
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching URL: {e}")
-        return []
-    except Exception as e:
-        st.error(f"Oops! Something went wrong while fetching the links: {e}")
-        return []
+        if date_str and article_date != date_str:
+            return article_date, None
 
-def extract_article(link, newspaper, target_date):
-    try:
-        response = requests.get(link)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        article_date = "Date not found"
-        article_text = ""
-
-        if newspaper == "Gujarat Samachar":
-            date_element = soup.find('span', class_='post-date')
-            if date_element:
-                article_date = date_element.get_text(strip=True)
-
-        try:
-            article_date_obj = datetime.strptime(article_date, '%Y-%m-%d') if article_date != "Date not found" else None
-            if article_date_obj:
-                st.write(f"Comparing Article Date: {article_date_obj.date()} with Target Date: {target_date.date()}")
-        except Exception as e:
-            st.error(f"Error in date parsing: {e}")
-
-        if article_date_obj and article_date_obj.date() != target_date.date():
-            return article_date, ""
-
-        content = soup.find('div', class_='td-post-content')
+        content = soup.find('div', {'class': 'article-content'})
         if content:
             paragraphs = content.find_all('p')
             seen_text = set()
@@ -69,64 +37,41 @@ def extract_article(link, newspaper, target_date):
                     seen_text.add(text)
 
         return article_date, article_text.strip() if article_text else "No article content found."
-
-    except requests.exceptions.RequestException as e:
-        return f"Error fetching article content: {e}", ""
-    except Exception as e:
-        return f"Error extracting article: {e}", ""
+    return article_date, None
 
 def main():
-    st.set_page_config(page_title="Gujarati News Article Scraper", page_icon="📰")
-    st.title("Gujarati News Article Finder")
+    st.title("Article Finder")
+    newspaper = st.sidebar.selectbox("Select a Newspaper", ("Gujarat Samachar",))
+    date_str = st.sidebar.date_input("Select Date", datetime.today().date()).strftime('%Y-%m-%d')
+    keyword = st.sidebar.text_input("Enter Keyword to Search")
 
-    st.markdown("""
-    **Welcome to the Gujarati News Article Finder!**
-    This tool allows you to search for articles from popular Gujarati newspapers.
-    Enter a keyword, and we'll find relevant articles for you!
-    """)
-
-    newspaper_urls = {
-        "Gujarat Samachar": "https://www.gujaratsamachar.com/"
-    }
-
-    base_url = newspaper_urls["Gujarat Samachar"]
-
-    keyword = st.text_input("Enter a Keyword to Search (e.g., 'Cricket', 'Politics')")
-    date_str = st.date_input("Select a Date", value=datetime(2025, 1, 21))
-
-    if st.button("Find Articles"):
-        if keyword:
-            with st.spinner("Detecting keyword language..."):
-                try:
-                    detected_language = GoogleTranslator(source='auto', target='en').translate(keyword)
-                except Exception as e:
-                    st.error(f"Error during language detection: {e}")
-                    detected_language = keyword
-                if detected_language == keyword:
-                    st.info(f"Keyword detected in English: '{keyword}'")
-                    translated_keyword = keyword
-                else:
-                    st.info(f"Keyword detected in Gujarati: '{keyword}'")
-                    translated_keyword = keyword
-
-            with st.spinner("Searching for articles..."):
-                links = fetch_article_links(base_url, translated_keyword)
-
-                if links:
-                    st.success(f"Found {len(links)} articles for the keyword '{translated_keyword}':")
-                    for i, link in enumerate(links, start=1):
-                        st.write(f"**Article {i} (Link):** {link}")
-                        with st.spinner(f"Extracting content from article {i}..."):
-                            article_date, article_content = extract_article(link, "Gujarat Samachar", date_str)
-                            if article_content:
-                                st.write(f"**Published on:** {article_date}")
-                                st.write(f"**Article Content (Without Links):**\n{article_content}")
-                            else:
-                                st.warning(f"Article {i} does not match the date '{date_str}' or has no content.")
-                else:
-                    st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
+    if keyword:
+        search_url = f"https://www.gujaratsamachar.com/search/{keyword.replace(' ', '+')}"
+        response = requests.get(search_url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            links = set()
+            for a_tag in soup.find_all('a', href=True):
+                link = a_tag['href']
+                if 'gujaratsamachar.com' in link and link not in links:
+                    links.add(link)
+            
+            unique_links = set()
+            for link in links:
+                if link not in unique_links:
+                    unique_links.add(link)
+                    st.write(f"**Article Link:** {link}")
+                    with st.spinner(f"Extracting content..."):
+                        article_date, article_content = extract_article(link, newspaper, date_str)
+                        if article_content:
+                            st.write(f"**Published on:** {article_date}")
+                            st.write(f"**Article Content (Without Links):**\n{article_content}")
+                        else:
+                            st.warning(f"Article does not match the date '{date_str}' or has no content.")
         else:
-            st.error("Please enter a keyword to search for articles.")
-
+            st.warning("No articles found for this keyword.")
+    else:
+        st.warning("Please enter a keyword to search.")
+        
 if __name__ == "__main__":
     main()
