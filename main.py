@@ -8,7 +8,9 @@ from deep_translator import GoogleTranslator
 def fetch_articles(keyword, date):
     base_url = "https://www.gujaratsamachar.com/"
     date_str = date.strftime("%Y-%m-%d")  
-    search_url = f"{base_url}?search={keyword}&date={date_str}"
+    search_url = f"{base_url}?date={date_str}"
+    
+    st.write(f"Search URL: {search_url}")  
     
     response = requests.get(search_url)
     soup = BeautifulSoup(response.content, "html.parser")
@@ -20,6 +22,7 @@ def fetch_articles(keyword, date):
         articles.append({"title": title, "content": content})
     
     return articles
+
 
 
 def translate_text(text, target_lang="en"):
