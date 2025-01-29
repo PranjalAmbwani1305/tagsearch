@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
 from datetime import datetime
 
-def fetch_article_links_by_keyword_and_date(base_url, keyword, date_str, max_pages=10):
+def fetch_article_links_by_keyword_and_date(base_url, keyword, date_str, max_pages=5):
     try:
         links = []
         page = 1
@@ -17,12 +17,12 @@ def fetch_article_links_by_keyword_and_date(base_url, keyword, date_str, max_pag
 
             for a in soup.find_all('a', href=True):
                 href = a['href']
-                if (keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.string.lower()) and date_str in href:
+                if (keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower()) and date_str in href:
                     if not href.startswith("http"):
                         href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
                     links.append(href)
 
-            next_page = soup.find('a', string='Next')
+            next_page = soup.find('a', text='Next')
             if next_page:
                 page += 1
             else:
@@ -46,7 +46,7 @@ def extract_article(link, newspaper):
         if newspaper == "Gujarat Samachar":
             date_element = soup.find('span', class_='post-date')
             if date_element:
-                article_date = date_element.string.strip()
+                article_date = date_element.get_text(strip=True)
 
         article_text = ""
         content = None
@@ -57,7 +57,7 @@ def extract_article(link, newspaper):
             paragraphs = content.find_all('p')
             seen_text = set()
             for p in paragraphs:
-                text = p.string.strip() if p.string else ""
+                text = p.get_text(strip=True)
                 if text and text not in seen_text:
                     article_text += text + "\n"
                     seen_text.add(text)
@@ -65,7 +65,7 @@ def extract_article(link, newspaper):
             paragraphs = soup.find_all('p')
             seen_text = set()
             for p in paragraphs:
-                text = p.string.strip() if p.string else ""
+                text = p.get_text(strip=True)
                 if text and text not in seen_text:
                     article_text += text + "\n"
                     seen_text.add(text)
