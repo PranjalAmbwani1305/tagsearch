@@ -2,7 +2,17 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
-from datetime import datetime
+from datetime import datetime, timedelta
+
+def generate_date_links(base_url, target_date, days_back=7):
+    links = []
+    for i in range(days_back):
+        # Subtract days from the target date to get previous dates
+        date = target_date - timedelta(days=i)
+        date_str = date.strftime('%Y/%m/%d')  # Format it as YYYY/MM/DD
+        url = f"{base_url}/{date_str}"  # Update this URL structure as required by the site
+        links.append(url)
+    return links
 
 def fetch_article_links(base_url, keyword):
     try:
@@ -16,6 +26,7 @@ def fetch_article_links(base_url, keyword):
                 href = a['href']
                 if not href.startswith("http"):
                     href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
+
                 links.add(href)
         return list(links)  # Convert back to list
     except requests.exceptions.RequestException as e:
@@ -108,22 +119,23 @@ def main():
                     translated_keyword = keyword
 
             with st.spinner("Searching for articles..."):
-                links = fetch_article_links(base_url, translated_keyword)
+                # Get article links for the last 7 days (you can adjust this)
+                links = generate_date_links(base_url, date_str, days_back=7)
 
                 if links:
-                    st.success(f"Found {len(links)} articles for the keyword '{translated_keyword}':")
+                    st.success(f"Found articles from the last 7 days before {date_str}:")
                     processed_links = set()  # Track processed links
                     for i, link in enumerate(links, start=1):
-                        st.write(f"**Article {i} (Link):** {link}")
-                        with st.spinner(f"Extracting content from article {i}..."):
+                        st.write(f"**Link {i}:** {link}")
+                        with st.spinner(f"Extracting content from link {i}..."):
                             article_date, article_content = extract_article(link, "Gujarat Samachar", date_str, processed_links)
                             if article_content:
                                 st.write(f"**Published on:** {article_date}")
                                 st.write(f"**Article Content (Without Links):**\n{article_content}")
                             else:
-                                st.warning(f"Article {i} does not match the date '{date_str}' or has no content.")
+                                st.warning(f"Link {i} does not match the date '{date_str}' or has no content.")
                 else:
-                    st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
+                    st.warning(f"No articles found for the given date range.")
         else:
             st.error("Please enter a keyword to search for articles.")
 
