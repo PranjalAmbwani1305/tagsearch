@@ -2,16 +2,7 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
-from datetime import datetime, timedelta
-
-def generate_date_links(base_url, target_date, days_back=7):
-    links = []
-    for i in range(days_back):
-        date = target_date - timedelta(days=i)
-        date_str = date.strftime('%Y/%m/%d')
-        url = f"{base_url}/{date_str}"
-        links.append(url)
-    return links
+from datetime import datetime
 
 def fetch_article_links(base_url, keyword):
     try:
@@ -19,15 +10,14 @@ def fetch_article_links(base_url, keyword):
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        links = set()
+        links = set()  # Use a set to avoid duplicates
         for a in soup.find_all('a', href=True):
             if keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower():
                 href = a['href']
                 if not href.startswith("http"):
                     href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
-
                 links.add(href)
-        return list(links)
+        return list(links)  # Convert back to list
     except requests.exceptions.RequestException as e:
         st.error(f"Error fetching URL: {e}")
         return []
@@ -49,22 +39,24 @@ def extract_article(link, newspaper, target_date, processed_links):
         article_date = "Date not found"
         article_text = ""
 
+        # Extract date
         if newspaper == "Gujarat Samachar":
             date_element = soup.find('span', class_='post-date')
             if date_element:
                 article_date = date_element.get_text(strip=True)
-                if article_date.startswith("Updated:"):
-                    article_date = article_date.replace("Updated:", "").strip()
 
+        # Parse the extracted date into a datetime object
         try:
-            article_date_obj = datetime.strptime(article_date, '%b %d, %Y')
+            article_date_obj = datetime.strptime(article_date, '%b %d, %Y')  # Expected format: Jan 19, 2025
         except Exception:
             article_date_obj = None
 
+        # Check if the article's date matches the target date
         if article_date_obj:
             if article_date_obj.date() != target_date.date():
-                return article_date, ""
+                return article_date, ""  # Skip articles that do not match the target date
 
+        # Extract content
         content = soup.find('div', class_='td-post-content')
         if content:
             paragraphs = content.find_all('p')
@@ -116,22 +108,22 @@ def main():
                     translated_keyword = keyword
 
             with st.spinner("Searching for articles..."):
-                links = generate_date_links(base_url, date_str, days_back=7)
+                links = fetch_article_links(base_url, translated_keyword)
 
                 if links:
-                    st.success(f"Found articles from the last 7 days before {date_str}:")
-                    processed_links = set()
+                    st.success(f"Found {len(links)} articles for the keyword '{translated_keyword}':")
+                    processed_links = set()  # Track processed links
                     for i, link in enumerate(links, start=1):
-                        st.write(f"**Link {i}:** {link}")
-                        with st.spinner(f"Extracting content from link {i}..."):
+                        st.write(f"**Article {i} (Link):** {link}")
+                        with st.spinner(f"Extracting content from article {i}..."):
                             article_date, article_content = extract_article(link, "Gujarat Samachar", date_str, processed_links)
                             if article_content:
                                 st.write(f"**Published on:** {article_date}")
                                 st.write(f"**Article Content (Without Links):**\n{article_content}")
                             else:
-                                st.warning(f"Link {i} does not match the date '{date_str}' or has no content.")
+                                st.warning(f"Article {i} does not match the date '{date_str}' or has no content.")
                 else:
-                    st.warning(f"No articles found for the given date range.")
+                    st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
         else:
             st.error("Please enter a keyword to search for articles.")
 
