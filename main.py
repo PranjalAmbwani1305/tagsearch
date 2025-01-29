@@ -25,30 +25,22 @@ def fetch_article_links(base_url, keyword):
         st.error(f"Oops! Something went wrong while fetching the links: {e}")
         return []
 
-def extract_article(link, newspaper, date_str):
+def extract_article(link, newspaper):
     try:
         response = requests.get(link)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
 
         article_date = "Date not found"
+        article_text = ""
 
+        # Find date
         if newspaper == "Gujarat Samachar":
             date_element = soup.find('span', class_='post-date')
             if date_element:
                 article_date = date_element.get_text(strip=True)
-                st.write(f"Extracted date from span.post-date: {article_date}")
-            
-            if article_date == "Date not found":
-                date_element = soup.find('meta', attrs={'property': 'article:published_time'})
-                if date_element:
-                    article_date = date_element['content']
-                    st.write(f"Extracted date from meta tag: {article_date}")
-
-        if article_date != date_str:
-            return None, None
-
-        article_text = ""
+        
+        # Extract content
         content = soup.find('div', class_='td-post-content')
         if content:
             paragraphs = content.find_all('p')
@@ -116,15 +108,12 @@ def main():
                     for i, link in enumerate(links, start=1):
                         st.write(f"**Article {i} (Link):** {link}")
                         with st.spinner(f"Extracting content from article {i}..."):
-                            article_date, article_content = extract_article(link, "Gujarat Samachar", str(date_str))
-                            if article_date:
+                            article_date, article_content = extract_article(link, "Gujarat Samachar")
+                            if article_content:
                                 st.write(f"**Published on:** {article_date}")
-                                if article_content:
-                                    st.write(f"**Article Content (Without Links):**\n{article_content}")
-                                else:
-                                    st.warning(f"Article {i} has no content.")
+                                st.write(f"**Article Content (Without Links):**\n{article_content}")
                             else:
-                                st.warning(f"Article {i} does not match the date '{date_str}' or has no content.")
+                                st.warning(f"Article {i} has no content.")
                 else:
                     st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
         else:
