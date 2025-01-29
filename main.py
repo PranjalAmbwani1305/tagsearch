@@ -48,11 +48,7 @@ def extract_article(link, newspaper, target_date, processed_links):
         # Debug: Print the article date to check its format
         st.write(f"Article Date: {article_date}")
 
-        # Check if date is not a valid date and handle accordingly
-        if article_date == "Date not found" or article_date.lower() == "date":
-            return article_date, "No article date found"
-
-        # Try parsing the article date to a datetime object
+        # Try parsing the article date to a datetime object, handle cases with time included
         try:
             # If the date includes time, split it and use only the date part
             article_date_obj = datetime.strptime(article_date.split(' ')[0], '%Y-%m-%d')
@@ -64,7 +60,7 @@ def extract_article(link, newspaper, target_date, processed_links):
         if article_date_obj:
             st.write(f"Parsed Article Date: {article_date_obj}")
             if article_date_obj.date() != target_date.date():
-                return article_date, "Date mismatch"
+                return article_date, ""
 
         # Extract content
         content = soup.find('div', class_='td-post-content')
