@@ -112,4 +112,21 @@ def main():
                 links = fetch_article_links(base_url, translated_keyword)
 
                 if links:
-                    st.success(f"Found {len(links)} articles f
+                    st.success(f"Found {len(links)} articles for the keyword '{translated_keyword}':")
+                    for i, link in enumerate(links, start=1):
+                        st.write(f"**Article {i} (Link):** {link}")
+                        with st.spinner(f"Extracting content from article {i}..."):
+                            article_date, article_content = extract_article(link, newspaper)
+                            st.write(f"**Published on:** {article_date}")
+
+                            if article_content:
+                                st.write(f"**Article Content (Without Links):**\n{article_content}")
+                            else:
+                                st.warning(f"Article {i} has no content.")
+                else:
+                    st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
+        else:
+            st.error("Please enter a keyword to search for articles.")
+
+if __name__ == "__main__":
+    main()
