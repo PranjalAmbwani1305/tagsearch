@@ -37,11 +37,13 @@ def extract_article(link, newspaper, date_str):
             date_element = soup.find('span', class_='post-date')
             if date_element:
                 article_date = date_element.get_text(strip=True)
-
+                st.write(f"Extracted date from span.post-date: {article_date}")
+            
             if article_date == "Date not found":
                 date_element = soup.find('meta', attrs={'property': 'article:published_time'})
                 if date_element:
                     article_date = date_element['content']
+                    st.write(f"Extracted date from meta tag: {article_date}")
 
         if article_date != date_str:
             return None, None
