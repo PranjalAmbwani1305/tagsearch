@@ -41,9 +41,6 @@ def extract_article(link, newspaper):
             if date_element:
                 article_date = date_element.get_text(strip=True)
 
-        # Debug output for date
-        st.write(f"Article Date: {article_date} (Link: {link})")
-
         article_text = ""
         content = None
         if newspaper == "Gujarat Samachar":
