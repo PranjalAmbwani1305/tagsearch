@@ -2,32 +2,20 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
-from datetime import datetime
 
-def fetch_article_links_by_keyword_and_date(base_url, keyword, date_str, max_pages=5):
+def fetch_article_links_by_keyword(base_url, keyword):
     try:
         links = []
-        page = 1
+        response = requests.get(base_url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-        while page <= max_pages:
-            url = f"{base_url}?page={page}" if page > 1 else base_url
-            response = requests.get(url)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
-
-            for a in soup.find_all('a', href=True):
-                href = a['href']
-                # Ensure the keyword and date appear in the article link (or in its content)
-                if (keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower()) and date_str in a.text:
-                    if not href.startswith("http"):
-                        href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
-                    links.append(href)
-
-            next_page = soup.find('a', text='Next')
-            if next_page:
-                page += 1
-            else:
-                break
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            if keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower():
+                if not href.startswith("http"):
+                    href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
+                links.append(href)
 
         return links
     except requests.exceptions.RequestException as e:
@@ -85,7 +73,7 @@ def main():
     st.markdown("""
     **Welcome to the Gujarati News Article Finder!**
     This tool allows you to search for articles from popular Gujarati newspapers.
-    You can search articles by **keyword** and **specific date**.
+    You can search articles by **keyword**.
     """)
 
     newspaper = "Gujarat Samachar"
@@ -97,12 +85,9 @@ def main():
     base_url = newspaper_urls.get(newspaper)
 
     keyword = st.text_input("Enter a Keyword to Search (e.g., 'Cricket', 'Politics')")
-    
-    date_input = st.date_input("Pick a date to search articles")
-    date_str = date_input.strftime('%Y-%m-%d')
 
     if st.button("Find Articles"):
-        if keyword and date_str:
+        if keyword:
             with st.spinner("Detecting keyword language..."):
                 try:
                     detected_language = GoogleTranslator(source='auto', target='en').translate(keyword)
@@ -116,11 +101,11 @@ def main():
                     st.info(f"Keyword detected in Gujarati: '{keyword}'")
                     translated_keyword = keyword
 
-            with st.spinner(f"Searching for articles with keyword '{translated_keyword}' on date {date_str}..."):
-                links = fetch_article_links_by_keyword_and_date(base_url, translated_keyword, date_str)
+            with st.spinner(f"Searching for articles with keyword '{translated_keyword}'..."):
+                links = fetch_article_links_by_keyword(base_url, translated_keyword)
 
                 if links:
-                    st.success(f"Found {len(links)} articles for the keyword '{translated_keyword}' and date '{date_str}':")
+                    st.success(f"Found {len(links)} articles for the keyword '{translated_keyword}':")
                     for i, link in enumerate(links, start=1):
                         with st.spinner(f"Extracting content from article {i}..."):
                             article_date, article_content = extract_article(link, newspaper)
@@ -131,9 +116,9 @@ def main():
                             else:
                                 st.warning(f"Article {i} has no content.")
                 else:
-                    st.warning(f"No articles found for the keyword '{translated_keyword}' on date '{date_str}'. Try using a different keyword or date.")
+                    st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
         else:
-            st.error("Please enter both a keyword and a date to search for articles.")
+            st.error("Please enter a keyword to search for articles.")
 
 if __name__ == "__main__":
     main()
