@@ -5,21 +5,14 @@ from deep_translator import GoogleTranslator
 
 def fetch_article_links(base_url, keyword):
     try:
-        # Fetch the page content
         response = requests.get(base_url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Print the raw HTML for debugging
-        print(soup.prettify())  # Debugging: Print the whole HTML content
-
         links = []
-        # Look for all <a> tags with href attribute
         for a in soup.find_all('a', href=True):
-            # Check if keyword is in href or anchor text (case insensitive)
             if keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower():
                 href = a['href']
-                # Ensure full URL if it's a relative path
                 if not href.startswith("http"):
                     href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
                 links.append(href)
@@ -31,16 +24,13 @@ def fetch_article_links(base_url, keyword):
 
 def extract_article(link):
     try:
-        # Fetch the article page content
         response = requests.get(link)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Extract the date of publication
         date = soup.find('h5')
         article_date = date.get_text(strip=True) if date else "Date not found"
 
-        # Extract the article content (body)
         content = soup.find('div', class_='article-body')
         if content:
             article_text = "\n".join(p.get_text() for p in content.find_all('p'))
@@ -54,7 +44,6 @@ def extract_article(link):
 
 def translate_text(text, target_language="gu"):
     try:
-        # Translate text to target language (Gujarati by default)
         translated = GoogleTranslator(source='auto', target=target_language).translate(text)
         return translated
     except Exception as e:
@@ -66,19 +55,18 @@ def main():
     st.title("Gujarati News Article Finder")
 
     base_url = "https://www.gujaratsamachar.com/"
-
-    keyword = st.text_input("Keyword to Search")
+    keyword = st.text_input("Enter Keyword to Search")
 
     if st.button("Find and Extract Articles"):
         if keyword:
             with st.spinner("Detecting keyword language..."):
                 detected_language = GoogleTranslator(source='auto', target='en').translate(keyword)
                 if detected_language == keyword:
-                    st.info(f"Detected keyword in English. Using it directly: '{keyword}'")
+                    st.info(f"Detected keyword in English: '{keyword}'")
                     translated_keyword = keyword
                     target_language = "gu"
                 else:
-                    st.info(f"Detected keyword in Gujarati. Using it directly: '{keyword}'")
+                    st.info(f"Detected keyword in Gujarati: '{keyword}'")
                     translated_keyword = keyword
                     target_language = "gu"
 
@@ -95,7 +83,6 @@ def main():
 
                                 if article_content:
                                     st.write(f"**Article Content (Original):**\n{article_content}")
-                                    # Translate content if needed
                                     translated_content = translate_text(article_content, target_language)
                                     st.write(f"**Article Content (Translated):**\n{translated_content}")
                                 else:
