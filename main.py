@@ -45,15 +45,20 @@ def extract_article(link, newspaper, target_date, processed_links):
             if date_element:
                 article_date = date_element.get_text(strip=True)
 
+        # Debug: Print the article date to check its format
+        st.write(f"Article Date: {article_date}")
+
         # Try parsing the article date to a datetime object, handle cases with time included
         try:
             # If the date includes time, split it and use only the date part
             article_date_obj = datetime.strptime(article_date.split(' ')[0], '%Y-%m-%d')
         except Exception as e:
             article_date_obj = None
+            st.write(f"Error parsing date: {e}")
 
         # Check if the article's date matches the target date
         if article_date_obj:
+            st.write(f"Parsed Article Date: {article_date_obj}")
             if article_date_obj.date() != target_date.date():
                 return article_date, ""
 
