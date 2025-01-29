@@ -45,8 +45,14 @@ def extract_article(link, newspaper, target_date, processed_links):
             if date_element:
                 article_date = date_element.get_text(strip=True)
 
+        # Try parsing the article date to a datetime object, handle cases with time included
+        try:
+            # If the date includes time, split it and use only the date part
+            article_date_obj = datetime.strptime(article_date.split(' ')[0], '%Y-%m-%d')
+        except Exception as e:
+            article_date_obj = None
+
         # Check if the article's date matches the target date
-        article_date_obj = datetime.strptime(article_date, '%Y-%m-%d') if article_date != "Date not found" else None
         if article_date_obj and article_date_obj.date() != target_date.date():
             return article_date, ""
 
