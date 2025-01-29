@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
+from datetime import datetime
 
 def fetch_article_links(base_url, keyword):
     try:
@@ -25,7 +26,7 @@ def fetch_article_links(base_url, keyword):
         st.error(f"Oops! Something went wrong while fetching the links: {e}")
         return []
 
-def extract_article(link, newspaper):
+def extract_article(link, newspaper, target_date):
     try:
         response = requests.get(link)
         response.raise_for_status()
@@ -34,12 +35,17 @@ def extract_article(link, newspaper):
         article_date = "Date not found"
         article_text = ""
 
-        # Find date
+        # Extract date
         if newspaper == "Gujarat Samachar":
             date_element = soup.find('span', class_='post-date')
             if date_element:
                 article_date = date_element.get_text(strip=True)
-        
+
+        # Check if the article's date matches the target date
+        article_date_obj = datetime.strptime(article_date, '%Y-%m-%d') if article_date != "Date not found" else None
+        if article_date_obj and article_date_obj.date() != target_date.date():
+            return article_date, ""
+
         # Extract content
         content = soup.find('div', class_='td-post-content')
         if content:
@@ -83,7 +89,7 @@ def main():
     base_url = newspaper_urls["Gujarat Samachar"]
 
     keyword = st.text_input("Enter a Keyword to Search (e.g., 'Cricket', 'Politics')")
-    date_str = st.date_input("Select a Date", value="2025-01-29")
+    date_str = st.date_input("Select a Date", value=datetime(2025, 1, 21))
 
     if st.button("Find Articles"):
         if keyword:
@@ -108,12 +114,12 @@ def main():
                     for i, link in enumerate(links, start=1):
                         st.write(f"**Article {i} (Link):** {link}")
                         with st.spinner(f"Extracting content from article {i}..."):
-                            article_date, article_content = extract_article(link, "Gujarat Samachar")
+                            article_date, article_content = extract_article(link, "Gujarat Samachar", date_str)
                             if article_content:
                                 st.write(f"**Published on:** {article_date}")
                                 st.write(f"**Article Content (Without Links):**\n{article_content}")
                             else:
-                                st.warning(f"Article {i} has no content.")
+                                st.warning(f"Article {i} does not match the date '{date_str}' or has no content.")
                 else:
                     st.warning(f"No articles found for the keyword '{translated_keyword}'. Try using a different keyword.")
         else:
