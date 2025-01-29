@@ -58,6 +58,14 @@ def extract_article(link, newspaper, date_str):
                 if text and text not in seen_text:
                     article_text += text + "\n"
                     seen_text.add(text)
+        else:
+            paragraphs = soup.find_all('p')
+            seen_text = set()
+            for p in paragraphs:
+                text = p.get_text(strip=True)
+                if text and text not in seen_text:
+                    article_text += text + "\n"
+                    seen_text.add(text)
 
         return article_date, article_text.strip() if article_text else "No article content found."
 
