@@ -7,10 +7,9 @@ from datetime import datetime, timedelta
 def generate_date_links(base_url, target_date, days_back=7):
     links = []
     for i in range(days_back):
-        # Subtract days from the target date to get previous dates
         date = target_date - timedelta(days=i)
-        date_str = date.strftime('%Y/%m/%d')  # Format it as YYYY/MM/DD
-        url = f"{base_url}/{date_str}"  # Update this URL structure as required by the site
+        date_str = date.strftime('%Y/%m/%d')
+        url = f"{base_url}/{date_str}"
         links.append(url)
     return links
 
@@ -20,7 +19,7 @@ def fetch_article_links(base_url, keyword):
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        links = set()  # Use a set to avoid duplicates
+        links = set()
         for a in soup.find_all('a', href=True):
             if keyword.lower() in a.get('href', '').lower() or keyword.lower() in a.text.lower():
                 href = a['href']
@@ -28,7 +27,7 @@ def fetch_article_links(base_url, keyword):
                     href = f"{base_url.rstrip('/')}/{href.lstrip('/')}"
 
                 links.add(href)
-        return list(links)  # Convert back to list
+        return list(links)
     except requests.exceptions.RequestException as e:
         st.error(f"Error fetching URL: {e}")
         return []
@@ -50,24 +49,22 @@ def extract_article(link, newspaper, target_date, processed_links):
         article_date = "Date not found"
         article_text = ""
 
-        # Extract date
         if newspaper == "Gujarat Samachar":
             date_element = soup.find('span', class_='post-date')
             if date_element:
                 article_date = date_element.get_text(strip=True)
+                if article_date.startswith("Updated:"):
+                    article_date = article_date.replace("Updated:", "").strip()
 
-        # Parse the extracted date into a datetime object
         try:
-            article_date_obj = datetime.strptime(article_date, '%b %d, %Y')  # Expected format: Jan 19, 2025
+            article_date_obj = datetime.strptime(article_date, '%b %d, %Y')
         except Exception:
             article_date_obj = None
 
-        # Check if the article's date matches the target date
         if article_date_obj:
             if article_date_obj.date() != target_date.date():
-                return article_date, ""  # Skip articles that do not match the target date
+                return article_date, ""
 
-        # Extract content
         content = soup.find('div', class_='td-post-content')
         if content:
             paragraphs = content.find_all('p')
@@ -119,12 +116,11 @@ def main():
                     translated_keyword = keyword
 
             with st.spinner("Searching for articles..."):
-                # Get article links for the last 7 days (you can adjust this)
                 links = generate_date_links(base_url, date_str, days_back=7)
 
                 if links:
                     st.success(f"Found articles from the last 7 days before {date_str}:")
-                    processed_links = set()  # Track processed links
+                    processed_links = set()
                     for i, link in enumerate(links, start=1):
                         st.write(f"**Link {i}:** {link}")
                         with st.spinner(f"Extracting content from link {i}..."):
