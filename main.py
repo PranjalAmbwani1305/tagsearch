@@ -53,8 +53,9 @@ def extract_article(link, newspaper, target_date, processed_links):
             article_date_obj = None
 
         # Check if the article's date matches the target date
-        if article_date_obj and article_date_obj.date() != target_date.date():
-            return article_date, ""
+        if article_date_obj:
+            if article_date_obj.date() != target_date.date():
+                return article_date, ""
 
         # Extract content
         content = soup.find('div', class_='td-post-content')
