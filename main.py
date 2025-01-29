@@ -2,18 +2,18 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 import datetime
+from deep_translator import GoogleTranslator
 
-# Function to scrape articles
+
 def fetch_articles(keyword, date):
     base_url = "https://www.gujaratsamachar.com/"
-    date_str = date.strftime("%Y-%m-%d")  # Format date as per the website's requirements
+    date_str = date.strftime("%Y-%m-%d")  
     search_url = f"{base_url}?search={keyword}&date={date_str}"
     
     response = requests.get(search_url)
     soup = BeautifulSoup(response.content, "html.parser")
     
     articles = []
-    # Assuming the website stores article content in <div class="article">
     for article in soup.find_all("div", class_="article"):
         title = article.find("h2").text.strip()
         content = article.find("p").text.strip()
@@ -22,12 +22,23 @@ def fetch_articles(keyword, date):
     return articles
 
 
+def translate_text(text, target_lang="en"):
+    try:
+        translated_text = GoogleTranslator(source='auto', target=target_lang).translate(text)
+        return translated_text
+    except Exception as e:
+        st.error(f"Error during translation: {e}")
+        return text
+
+
 def app():
     st.title("Gujarati Newspaper Article Search")
     
-   
     keyword = st.text_input("Enter keyword", "")
     date = st.date_input("Select Date", datetime.date.today())
+    target_lang = st.selectbox("Select Target Language for Translation", ["English", "Gujarati"])
+    
+    lang_map = {"English": "en", "Gujarati": "gu"}
     
     if st.button("Search"):
         if keyword:
@@ -36,11 +47,16 @@ def app():
             if articles:
                 for article in articles:
                     st.subheader(article["title"])
-                    st.write(article["content"])
+                    if target_lang == "English":
+                        translated_content = translate_text(article["content"], target_lang=lang_map[target_lang])
+                        st.write(translated_content)
+                    else:
+                        st.write(article["content"])
             else:
                 st.write("No articles found.")
         else:
             st.write("Please enter a keyword.")
+
 
 if __name__ == "__main__":
     app()
