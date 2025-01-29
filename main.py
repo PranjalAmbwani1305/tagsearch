@@ -35,18 +35,21 @@ def extract_article(link, newspaper, target_date):
         article_date = "Date not found"
         article_text = ""
 
-        # Extract date
         if newspaper == "Gujarat Samachar":
             date_element = soup.find('span', class_='post-date')
             if date_element:
                 article_date = date_element.get_text(strip=True)
 
-        # Check if the article's date matches the target date
-        article_date_obj = datetime.strptime(article_date, '%Y-%m-%d') if article_date != "Date not found" else None
+        try:
+            article_date_obj = datetime.strptime(article_date, '%Y-%m-%d') if article_date != "Date not found" else None
+            if article_date_obj:
+                st.write(f"Comparing Article Date: {article_date_obj.date()} with Target Date: {target_date.date()}")
+        except Exception as e:
+            st.error(f"Error in date parsing: {e}")
+
         if article_date_obj and article_date_obj.date() != target_date.date():
             return article_date, ""
 
-        # Extract content
         content = soup.find('div', class_='td-post-content')
         if content:
             paragraphs = content.find_all('p')
